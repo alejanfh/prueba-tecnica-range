@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react'
 // 5. Se podrian aplicar mejoras (.env, suspense,...)
 
 // Fase 2: Esto deberia estar en el .env
-const mockUrl = 'https://demo1331376.mockable.io/api/rangeValues'
+const mockUrl = 'https://demo1331376.mockable.io/api/minmax'
 
 export default function Exercise1() {
   const router = useRouter()
@@ -28,7 +28,7 @@ export default function Exercise1() {
     fetch(mockUrl)
       .then((response) => response.json())
       .then((data) => {
-        if (data.rangeValues) {
+        if (data) {
           setMinValue(data.minValue)
           setMaxValue(data.maxValue)
         }

@@ -153,7 +153,10 @@ export default function Range({ minValue, maxValue, rangeValues }: RangeProps) {
   }
 
   return (
-    <div className='flex items-center gap-4 w-full'>
+    <div
+      data-testid='rangeComponent'
+      className='flex items-center gap-4 w-full'
+    >
       <input
         className=' p-1 bg-gray-100 text-sm w-[100px]'
         type='number'
