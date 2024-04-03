@@ -14,32 +14,37 @@ export default function Range({ minValue, maxValue, rangeValues }: RangeProps) {
   const [max, setMax] = useState<number>(
     rangeValues ? rangeValues[rangeValues.length - 1] : maxValue
   )
-  const [dragStart, setDragStart] = useState<number>(0)
   const rangeRef = useRef<HTMLDivElement>(null)
 
+  // Ajustar cualquier valor al mas cercano del arrays de RangeValues o que
+  // value > min y value < max
   const snapToRange = (value: number): number => {
     if (!rangeValues || rangeValues.length === 0) {
+      // Para que esté entre > min y < max
       const valueWithinRange = Math.min(Math.max(value, minValue), maxValue)
       return valueWithinRange
     }
 
+    // Se utiliza reduce (acumula el resultado) y se comprueba si
+    // el valor de la pos del bullet es la mas cercana (abs para ser positivo distancia)
     const closest = rangeValues.reduce((prev, curr) =>
       Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev
     )
     return closest
   }
 
+  // Para el 1 bullet(min), inicia el proceso de drag para mousemove
+  // y mouseup dinámicamente mientras el user mueve el mouse
   const startDrag = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault()
-    setDragStart(e.clientX)
     const moveHandler = rangeValues ? handleMouseMoveDiscrete : handleMouseMove
     document.addEventListener('mousemove', moveHandler)
     document.addEventListener('mouseup', endDrag)
   }
 
+  // Para el 2 bullet(max), //
   const startDragMax = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault()
-    setDragStart(e.clientX)
     const moveHandler = rangeValues
       ? handleMouseMoveMaxDiscrete
       : handleMouseMoveMax
@@ -47,16 +52,23 @@ export default function Range({ minValue, maxValue, rangeValues }: RangeProps) {
     document.addEventListener('mouseup', endDrag)
   }
 
+  // Coomo se mueve el bullet 1 min
   const handleMouseMove = (e: MouseEvent) => {
     if (!rangeRef.current) return
 
+    // Obtengo la info (left, width, height, right,...) del div (LINE)
     const rangeRect = rangeRef.current.getBoundingClientRect()
+
+    // Calculo la nueva posición
+    // (e.clientX - rangeRect.left) que tan lejos hacia la derecha está el cursor desde
+    // el borde izquierdo
+    // Despues se divide por el ancho total del contenedor y se obtiene el % que ha avanzado el bullet
+    // Se multiplica por la diferencia total de valores posibles + minValue(para asegurar que esta en el rango)
     let newMin =
       ((e.clientX - rangeRect.left) / rangeRect.width) * (maxValue - minValue) +
       minValue
 
-    newMin = snapToRange(newMin)
-
+    // Seteo el nuevo valor y posicion del bullet sin que pase del min y max
     setMin(Math.max(minValue, Math.min(newMin, max)))
   }
 
@@ -64,20 +76,19 @@ export default function Range({ minValue, maxValue, rangeValues }: RangeProps) {
     if (!rangeRef.current || !rangeValues) return
 
     const rangeRect = rangeRef.current.getBoundingClientRect()
-    // Calcula la posición proporcional del cursor dentro del rango.
+
     const cursorPosition = (e.clientX - rangeRect.left) / rangeRect.width
-    // Calcula el índice basado en la posición proporcional.
+
+    // Lo mismo que la anterior funcion pero con las posiciones del array
     let newIndex = Math.round(cursorPosition * (rangeValues.length - 1))
 
-    // Asegurar que min no exceda max
+    // Asegurar que min no exceda max (para que no se crucen)
     if (rangeValues[newIndex] >= max) {
       newIndex = rangeValues.indexOf(max) - 1
     }
 
-    // Clampa el índice para evitar que sobrepase los límites del array.
     newIndex = Math.max(0, Math.min(newIndex, rangeValues.length - 1))
 
-    // Actualiza el valor mínimo basado en el nuevo índice.
     setMin(rangeValues[newIndex])
   }
 
@@ -89,10 +100,6 @@ export default function Range({ minValue, maxValue, rangeValues }: RangeProps) {
       ((e.clientX - rangeRect.left) / rangeRect.width) * (maxValue - minValue) +
       minValue
 
-    // Adjust newMax based on the presence of rangeValues
-    newMax = snapToRange(newMax)
-
-    // Ensure max does not go below min
     setMax(Math.max(min, Math.min(newMax, maxValue)))
   }
 
@@ -100,10 +107,12 @@ export default function Range({ minValue, maxValue, rangeValues }: RangeProps) {
     if (!rangeRef.current || !rangeValues) return
 
     const rangeRect = rangeRef.current.getBoundingClientRect()
+
     const cursorPosition = (e.clientX - rangeRect.left) / rangeRect.width
+
     let newIndex = Math.round(cursorPosition * (rangeValues.length - 1))
 
-    // Asegurar que max no sea menor que min
+    // Asegurar que max no sea menor que min (que no se crucen)
     if (rangeValues[newIndex] <= min) {
       newIndex = rangeValues.indexOf(min) + 1
     }
@@ -113,24 +122,28 @@ export default function Range({ minValue, maxValue, rangeValues }: RangeProps) {
     setMax(rangeValues[newIndex])
   }
 
+  // Calcula la posición del bullet 1 (min) del rango como un
+  // porcentaje del ancho total del contenedor del slider.
   const calculateLeft = () => {
     if (rangeValues && rangeValues.length > 0) {
       const index = rangeValues.indexOf(min)
-      // Asegurar que el deslizador se mueva en proporción a la longitud de rangeValues
       return (index / (rangeValues.length - 1)) * 100
     }
+
+    // (min - minValue) / (maxValue - minValue) en % en que posicion está
+    // representa la posicion del valor minimo dentro del rango
     return ((min - minValue) / (maxValue - minValue)) * 100
   }
 
   const calculateRight = () => {
     if (rangeValues && rangeValues.length > 0) {
       const index = rangeValues.indexOf(max)
-      // Asegurar que el deslizador se mueva en proporción a la longitud de rangeValues
       return (index / (rangeValues.length - 1)) * 100
     }
     return ((max - minValue) / (maxValue - minValue)) * 100
   }
 
+  // Eliminar los listeners para evitar efectos secundarios (rendimiento, o cosas raras)
   const endDrag = () => {
     document.removeEventListener('mousemove', handleMouseMove)
     document.removeEventListener('mousemove', handleMouseMoveMax)
@@ -160,14 +173,14 @@ export default function Range({ minValue, maxValue, rangeValues }: RangeProps) {
           }
         }}
       >
-        {/* Bullet Min */}
+        {/* Bullet 1 Min */}
         <div
           className='absolute top-0 -translate-y-1/2 translate-x-[-50%] w-4 h-4 bg-black rounded-full cursor-grab  hover:scale-150 '
           style={{ left: `${calculateLeft()}%` }}
           onMouseDown={startDrag}
         />
 
-        {/* Bullet Max */}
+        {/* Bullet 2 Max */}
         <div
           className='absolute top-0 -translate-y-1/2 translate-x-[-50%] w-4 h-4 bg-black rounded-full cursor-grab hover:scale-150'
           style={{ left: `${calculateRight()}%` }}

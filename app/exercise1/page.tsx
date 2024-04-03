@@ -3,6 +3,13 @@ import { useRouter } from 'next/navigation'
 import Range from '../components/Range'
 import { useEffect, useState } from 'react'
 
+// 1. useState (manejar el estado de los valores)
+// y useEffect (cargar los datos de la api)
+// 2. Fetch para la carga de datos y manejo de loading y errores
+// 3. Diseño volver a atras, texto loading y texto error
+// 4. Implementar componente Range reutilizable
+// 5. Se podrian aplicar mejoras (.env, suspense,...)
+
 // Fase 2: Esto deberia estar en el .env
 const mockUrl = 'https://demo1331376.mockable.io/api/rangeValues'
 
