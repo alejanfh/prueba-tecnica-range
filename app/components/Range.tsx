@@ -19,7 +19,8 @@ export default function Range({ minValue, maxValue, rangeValues }: RangeProps) {
 
   const snapToRange = (value: number): number => {
     if (!rangeValues || rangeValues.length === 0) {
-      return value
+      const valueWithinRange = Math.min(Math.max(value, minValue), maxValue)
+      return valueWithinRange
     }
 
     const closest = rangeValues.reduce((prev, curr) =>
@@ -62,21 +63,21 @@ export default function Range({ minValue, maxValue, rangeValues }: RangeProps) {
   const handleMouseMoveDiscrete = (e: MouseEvent) => {
     if (!rangeRef.current || !rangeValues) return
 
-    // Calcular el cambio en posición desde el inicio del arrastre
-    const deltaX = e.clientX - dragStart
-    const rangeWidth = rangeRef.current.offsetWidth
-    const stepsMoved = Math.round(
-      (deltaX / rangeWidth) * (rangeValues.length - 1)
-    )
-    let newIndex = rangeValues.indexOf(min) + stepsMoved
+    const rangeRect = rangeRef.current.getBoundingClientRect()
+    // Calcula la posición proporcional del cursor dentro del rango.
+    const cursorPosition = (e.clientX - rangeRect.left) / rangeRect.width
+    // Calcula el índice basado en la posición proporcional.
+    let newIndex = Math.round(cursorPosition * (rangeValues.length - 1))
 
-    if (newIndex >= rangeValues.indexOf(max)) {
-      newIndex = rangeValues.indexOf(max) - 1 // Evitar que se crucen
+    // Asegurar que min no exceda max
+    if (rangeValues[newIndex] >= max) {
+      newIndex = rangeValues.indexOf(max) - 1
     }
 
-    // Asegurar que el índice esté dentro de los límites
+    // Clampa el índice para evitar que sobrepase los límites del array.
     newIndex = Math.max(0, Math.min(newIndex, rangeValues.length - 1))
 
+    // Actualiza el valor mínimo basado en el nuevo índice.
     setMin(rangeValues[newIndex])
   }
 
@@ -98,22 +99,17 @@ export default function Range({ minValue, maxValue, rangeValues }: RangeProps) {
   const handleMouseMoveMaxDiscrete = (e: MouseEvent) => {
     if (!rangeRef.current || !rangeValues) return
 
-    const deltaX = e.clientX - dragStart // Cambio en la posición X del cursor desde el inicio del arrastre
-    const rangeWidth = rangeRef.current.offsetWidth // Ancho total del componente del rango
-    // Calcular el número de pasos movidos, basado en la proporción del cambio de posición respecto al ancho total
-    const stepsMoved = Math.round(
-      (deltaX / rangeWidth) * (rangeValues.length - 1)
-    )
-    let newIndex = rangeValues.indexOf(max) + stepsMoved // Nuevo índice en rangeValues basado en el movimiento
+    const rangeRect = rangeRef.current.getBoundingClientRect()
+    const cursorPosition = (e.clientX - rangeRect.left) / rangeRect.width
+    let newIndex = Math.round(cursorPosition * (rangeValues.length - 1))
 
-    if (newIndex <= rangeValues.indexOf(min)) {
-      newIndex = rangeValues.indexOf(min) + 1 // Evitar que se crucen
+    // Asegurar que max no sea menor que min
+    if (rangeValues[newIndex] <= min) {
+      newIndex = rangeValues.indexOf(min) + 1
     }
 
-    // Asegurarse de que el nuevo índice esté dentro de los límites permitidos
     newIndex = Math.max(0, Math.min(newIndex, rangeValues.length - 1))
 
-    // Actualizar el valor de max al valor correspondiente en rangeValues
     setMax(rangeValues[newIndex])
   }
 
@@ -135,7 +131,6 @@ export default function Range({ minValue, maxValue, rangeValues }: RangeProps) {
     return ((max - minValue) / (maxValue - minValue)) * 100
   }
 
-  // Modify endDrag to remove both min and max mousemove events
   const endDrag = () => {
     document.removeEventListener('mousemove', handleMouseMove)
     document.removeEventListener('mousemove', handleMouseMoveMax)
@@ -154,6 +149,7 @@ export default function Range({ minValue, maxValue, rangeValues }: RangeProps) {
         min={minValue}
         max={maxValue}
         step={rangeValues ? 'any' : 1}
+        readOnly={rangeValues ? true : false}
       />
       <div
         ref={rangeRef}
@@ -186,6 +182,7 @@ export default function Range({ minValue, maxValue, rangeValues }: RangeProps) {
         min={minValue}
         max={maxValue}
         step={rangeValues ? 'any' : 1}
+        readOnly={rangeValues ? true : false}
       />
     </div>
   )

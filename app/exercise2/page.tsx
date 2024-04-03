@@ -1,15 +1,40 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import Range from '../components/Range'
+import { useEffect, useState } from 'react'
+
+// Esto deberia estar en el .env
+const mockUrl = 'https://demo1331376.mockable.io/api/rangeValues'
 
 export default function Exercise2() {
   const router = useRouter()
+  const [minValue, setMinValue] = useState<number>(1)
+  const [maxValue, setMaxValue] = useState<number>(1000)
+  const [rangeValues, setRangeValues] = useState<number[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
 
   const handleBackClick = () => {
     router.back()
   }
 
-  const rangeValues = [1.99, 5.99, 10.99, 30.99, 50.99, 70.99]
+  useEffect(() => {
+    fetch(mockUrl)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.rangeValues) {
+          setRangeValues(data.rangeValues)
+          setMinValue(data.rangeValues[0])
+          setMaxValue(data.rangeValues[data.rangeValues.length - 1])
+        }
+        setIsLoading(false)
+      })
+      .catch((error) => {
+        console.error('Error fetching mock data:', error)
+        setError('Failed to load data. Please try again later.')
+        setIsLoading(false)
+      })
+  }, [])
 
   return (
     <main className='flex flex-col items-center justify-center min-h-screen bg-gray-100'>
@@ -19,9 +44,18 @@ export default function Exercise2() {
       >
         Back
       </button>
-      <section>
-        <Range minValue={1} maxValue={1000} rangeValues={rangeValues} />
-      </section>
+      {isLoading ? (
+        <p>Loading...</p> // Fase 2: Mejorarlo con un <Suspense>
+      ) : (
+        <section>
+          <Range
+            minValue={minValue}
+            maxValue={maxValue}
+            rangeValues={rangeValues}
+          />
+        </section>
+      )}
+      {error && <p className='text-red-500'>{error}</p>}
     </main>
   )
 }
