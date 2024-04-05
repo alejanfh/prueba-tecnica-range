@@ -12,7 +12,7 @@ El proyecto tiene llamada a la api utilizando mockable.io, test unitarios y de i
 Instrucciones paso a paso sobre cómo instalar y configurar tu proyecto localmente:
 
 ```bash
-git clone https://tu-repositorio-aqui.git
+git clone https://github.com/alejanfh/prueba-tecnica-range.git
 cd prueba-tecnica-range
 npm install
 ```
