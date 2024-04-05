@@ -1,6 +1,6 @@
-# Prueba técnica MANGO
+# Prueba técnica para empresa
 
-Prueba técnica para MANGO que consiste en crear un componente <Range /> con dos modos:
+Prueba técnica para ##### que consiste en crear un componente <Range /> con dos modos:
 
 1. Normal range from min to max number
 2. Fixed number of options range
